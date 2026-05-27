@@ -1,8 +1,7 @@
-use std::sync::atomic::{self, AtomicBool, AtomicU16, AtomicU32, Ordering};
+use super::sync_primitives::{atomic, AtomicBool, AtomicU16, AtomicU32, AtomicU64, Ordering};
 
 use super::{AccessTime, KeyHash};
 use crate::common::time::{AtomicInstant, Instant};
-use portable_atomic::AtomicU64;
 
 #[derive(Debug)]
 pub(crate) struct EntryInfo<K> {

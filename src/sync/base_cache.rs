@@ -30,7 +30,10 @@ use crate::{
     Entry, Expiry, Policy, PredicateError,
 };
 
-use crossbeam_channel::{Receiver, Sender, TrySendError};
+use crate::common::concurrent::{
+    channel::{Receiver, Sender, TrySendError},
+    sync_primitives::{AtomicBool, AtomicU8, Ordering},
+};
 use crossbeam_utils::atomic::AtomicCell;
 use equivalent::Equivalent;
 use parking_lot::{Mutex, RwLock};
@@ -40,10 +43,7 @@ use std::{
     collections::hash_map::RandomState,
     hash::{BuildHasher, Hash},
     rc::Rc,
-    sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering},
-        Arc,
-    },
+    sync::Arc,
     time::{Duration, Instant as StdInstant},
 };
 
@@ -157,8 +157,8 @@ where
         let is_eviction_listener_enabled = eviction_listener.is_some();
         let fast_now = clock.fast_now();
 
-        let (r_snd, r_rcv) = crossbeam_channel::bounded(r_size);
-        let (w_snd, w_rcv) = crossbeam_channel::bounded(w_size);
+        let (r_snd, r_rcv) = crate::common::concurrent::channel::bounded(r_size);
+        let (w_snd, w_rcv) = crate::common::concurrent::channel::bounded(w_size);
 
         let inner = Arc::new(Inner::new(
             name,

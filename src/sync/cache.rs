@@ -19,7 +19,7 @@ use crate::{
     Entry, Policy, PredicateError,
 };
 
-use crossbeam_channel::{Sender, TrySendError};
+use crate::common::concurrent::channel::{Sender, TrySendError};
 use equivalent::Equivalent;
 use std::{
     collections::hash_map::RandomState,
@@ -1887,13 +1887,11 @@ mod tests {
         Expiry,
     };
 
+    use crate::common::concurrent::sync_primitives::{AtomicU8, Ordering};
     use parking_lot::Mutex;
     use std::{
         convert::Infallible,
-        sync::{
-            atomic::{AtomicU8, Ordering},
-            Arc,
-        },
+        sync::Arc,
         time::{Duration, Instant as StdInstant},
     };
 

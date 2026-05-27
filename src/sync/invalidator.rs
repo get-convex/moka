@@ -8,13 +8,11 @@ use crate::{
     PredicateError,
 };
 
+use crate::common::concurrent::sync_primitives::{AtomicBool, Ordering};
 use parking_lot::{Mutex, MutexGuard};
 use std::{
     hash::{BuildHasher, Hash},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
 };
 use uuid::Uuid;
 

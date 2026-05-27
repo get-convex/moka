@@ -5,10 +5,8 @@ use crate::common::time::{AtomicInstant, Instant};
 use crate::common::HousekeeperConfig;
 
 use parking_lot::{Mutex, MutexGuard};
-use std::{
-    sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
-};
+use super::sync_primitives::{AtomicBool, Ordering};
+use std::time::Duration;
 
 pub(crate) trait InnerSync {
     /// Runs the pending tasks. Returns `true` if there are more entries to evict in
