@@ -44,6 +44,32 @@ impl<K, V, S: BuildHasher> ShuttleHashMap<K, V, S> {
         }
     }
 
+    pub(crate) fn with_num_segments_and_hasher(_num_segments: usize, build_hasher: S) -> Self {
+        Self {
+            buckets: RwLock::new(HashMap::new()),
+            build_hasher,
+        }
+    }
+
+    /// Inserts `key`→`value` only if `key` is not already present.
+    ///
+    /// Returns `None` if the entry was inserted, or `Some(existing)` (a clone of
+    /// the pre-existing value) if the key was already present.
+    pub(crate) fn insert_if_not_present(&self, key: K, hash: u64, value: V) -> Option<V>
+    where
+        K: PartialEq,
+        V: Clone,
+    {
+        let mut buckets = self.buckets.write();
+        let bucket = buckets.entry(hash).or_default();
+        if let Some((_, existing)) = bucket.iter().find(|(k, _)| k == &key) {
+            Some(existing.clone())
+        } else {
+            bucket.push((key, value));
+            None
+        }
+    }
+
     pub(crate) fn hash<Q>(&self, key: &Q) -> u64
     where
         K: std::borrow::Borrow<Q>,
