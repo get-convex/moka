@@ -90,3 +90,27 @@ fn insert_with_eviction_listener() {
         50,
     );
 }
+
+#[test]
+fn concurrent_get_with() {
+    // Exercises the value_initializer `waiters` map, where two threads race to
+    // initialize the same key via `get_with`.
+    shuttle::check_random(
+        || {
+            let cache: Cache<u32, u32> = Cache::new(100);
+
+            let c1 = cache.clone();
+            let t1 = thread::spawn(move || c1.get_with(1, || 10));
+
+            let c2 = cache.clone();
+            let t2 = thread::spawn(move || c2.get_with(1, || 20));
+
+            let v1 = t1.join().unwrap();
+            let v2 = t2.join().unwrap();
+
+            // Both threads must observe the same initialized value.
+            assert_eq!(v1, v2);
+        },
+        100,
+    );
+}

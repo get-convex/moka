@@ -51,7 +51,10 @@ pub(crate) struct ValueInitializer<K, V, S> {
     // try_get_with method. We use the type ID as a part of the key to ensure that
     // we can always downcast the trait object ErrorObject (in Waiter<V>) into
     // its concrete type.
+    #[cfg(not(moka_shuttle))]
     waiters: crate::cht::SegmentedHashMap<(Arc<K>, TypeId), Waiter<V>, S>,
+    #[cfg(moka_shuttle)]
+    waiters: crate::common::concurrent::shuttle_map::ShuttleHashMap<(Arc<K>, TypeId), Waiter<V>, S>,
 }
 
 impl<K, V, S> ValueInitializer<K, V, S>
@@ -61,12 +64,18 @@ where
     S: BuildHasher + Clone + Send + Sync + 'static,
 {
     pub(crate) fn with_hasher(hasher: S) -> Self {
-        Self {
-            waiters: crate::cht::SegmentedHashMap::with_num_segments_and_hasher(
+        #[cfg(not(moka_shuttle))]
+        let waiters = crate::cht::SegmentedHashMap::with_num_segments_and_hasher(
+            WAITER_MAP_NUM_SEGMENTS,
+            hasher,
+        );
+        #[cfg(moka_shuttle)]
+        let waiters =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_and_hasher(
                 WAITER_MAP_NUM_SEGMENTS,
                 hasher,
-            ),
-        }
+            );
+        Self { waiters }
     }
 
     /// # Panics
