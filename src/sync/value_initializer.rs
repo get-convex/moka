@@ -277,6 +277,7 @@ where
             Op::Put(value) => {
                 cache.insert_with_hash(Arc::clone(&c_key), c_hash, value.clone());
                 if entry_existed {
+                    #[cfg(not(moka_shuttle))]
                     crossbeam_epoch::pin().flush();
                     let entry = Entry::new(Some(c_key), value, true, true);
                     Ok(CompResult::ReplacedWith(entry))
@@ -288,6 +289,7 @@ where
             Op::Remove => {
                 let maybe_prev_v = cache.invalidate_with_hash(&*c_key, c_hash, true);
                 if let Some(prev_v) = maybe_prev_v {
+                    #[cfg(not(moka_shuttle))]
                     crossbeam_epoch::pin().flush();
                     let entry = Entry::new(Some(c_key), prev_v, false, false);
                     Ok(CompResult::Removed(entry))

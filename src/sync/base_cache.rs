@@ -605,6 +605,7 @@ where
                 old_info.last_modified,
             );
         }
+        #[cfg(not(moka_shuttle))]
         crossbeam_epoch::pin().flush();
         (upd_op, ts)
     }
@@ -867,7 +868,12 @@ enum AdmissionResult<K> {
     Rejected,
 }
 
+#[cfg(not(moka_shuttle))]
 type CacheStore<K, V, S> = crate::cht::SegmentedHashMap<Arc<K>, MiniArc<ValueEntry<K, V>>, S>;
+
+#[cfg(moka_shuttle)]
+type CacheStore<K, V, S> =
+    crate::common::concurrent::shuttle_map::ShuttleHashMap<Arc<K>, MiniArc<ValueEntry<K, V>>, S>;
 
 pub(crate) struct Inner<K, V, S> {
     name: Option<String>,
@@ -896,6 +902,7 @@ impl<K, V, S> Drop for Inner<K, V, S> {
     fn drop(&mut self) {
         // Ensure crossbeam-epoch to collect garbages (`deferred_fn`s) in the
         // global bag so that previously cached values will be dropped.
+        #[cfg(not(moka_shuttle))]
         for _ in 0..128 {
             crossbeam_epoch::pin().flush();
         }
@@ -1027,11 +1034,19 @@ where
                 .unwrap_or_default();
             (64, ic)
         };
+        #[cfg(not(moka_shuttle))]
         let cache = crate::cht::SegmentedHashMap::with_num_segments_capacity_and_hasher(
             num_segments,
             initial_capacity,
             build_hasher.clone(),
         );
+        #[cfg(moka_shuttle)]
+        let cache =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_capacity_and_hasher(
+                num_segments,
+                initial_capacity,
+                build_hasher.clone(),
+            );
 
         let now = clock.now();
         let timer_wheel = Mutex::new(TimerWheel::new(now));
@@ -1309,6 +1324,7 @@ where
         self.weighted_size
             .store(eviction_state.counters.weighted_size);
 
+        #[cfg(not(moka_shuttle))]
         crossbeam_epoch::pin().flush();
 
         // Ensure the deqs lock is held until here.

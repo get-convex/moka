@@ -47,7 +47,11 @@ impl<K> KeyDateLite<K> {
 }
 
 pub(crate) struct Invalidator<K, V, S> {
+    #[cfg(not(moka_shuttle))]
     predicates: crate::cht::SegmentedHashMap<PredicateId, Predicate<K, V>, S>,
+    #[cfg(moka_shuttle)]
+    predicates:
+        crate::common::concurrent::shuttle_map::ShuttleHashMap<PredicateId, Predicate<K, V>, S>,
     is_empty: AtomicBool,
     scan_context: Arc<ScanContext<K, V>>,
 }
@@ -61,11 +65,19 @@ impl<K, V, S> Invalidator<K, V, S> {
         S: BuildHasher,
     {
         const CAPACITY: usize = 0;
+        #[cfg(not(moka_shuttle))]
         let predicates = crate::cht::SegmentedHashMap::with_num_segments_capacity_and_hasher(
             PREDICATE_MAP_NUM_SEGMENTS,
             CAPACITY,
             hasher,
         );
+        #[cfg(moka_shuttle)]
+        let predicates =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_capacity_and_hasher(
+                PREDICATE_MAP_NUM_SEGMENTS,
+                CAPACITY,
+                hasher,
+            );
         Self {
             predicates,
             is_empty: AtomicBool::new(true),

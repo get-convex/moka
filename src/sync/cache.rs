@@ -1046,6 +1046,7 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 Entry::new(k, v, true, false)
             }
@@ -1267,11 +1268,13 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 Some(Entry::new(k, v, true, false))
             }
             InitResult::ReadExisting(v) => Some(Entry::new(k, v, false, false)),
             InitResult::InitErr(_) => {
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 None
             }
@@ -1459,11 +1462,13 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 Ok(Entry::new(k, v, true, false))
             }
             InitResult::ReadExisting(v) => Ok(Entry::new(k, v, false, false)),
             InitResult::InitErr(e) => {
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 Err(e)
             }
@@ -1635,6 +1640,7 @@ where
                     hk,
                 )
                 .expect("Failed to remove");
+                #[cfg(not(moka_shuttle))]
                 crossbeam_epoch::pin().flush();
                 maybe_v
             }

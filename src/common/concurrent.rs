@@ -11,6 +11,9 @@ pub(crate) mod deques;
 pub(crate) mod entry_info;
 pub(crate) mod sync_primitives;
 
+#[cfg(moka_shuttle)]
+pub(crate) mod shuttle_map;
+
 #[cfg(feature = "sync")]
 pub(crate) mod housekeeper;
 
