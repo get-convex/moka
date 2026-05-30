@@ -4,7 +4,7 @@ use std::time::{Duration, Instant as StdInstant};
 use std::sync::Arc;
 
 #[cfg(test)]
-use parking_lot::RwLock;
+use crate::common::concurrent::sync_primitives::RwLock;
 
 // This is `moka`'s `Instant` struct.
 use super::Instant;

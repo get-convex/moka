@@ -1,4 +1,4 @@
-use parking_lot::RwLock;
+use crate::common::concurrent::sync_primitives::RwLock;
 use std::{
     any::{Any, TypeId},
     fmt,

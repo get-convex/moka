@@ -1,6 +1,6 @@
 use crate::common::{concurrent::arc::MiniArc, deque::DeqNode, time::Instant};
 
-use parking_lot::Mutex;
+use crate::common::concurrent::sync_primitives::Mutex;
 use std::{fmt, ptr::NonNull, sync::Arc};
 use tagptr::TagNonNull;
 
