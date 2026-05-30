@@ -4,7 +4,8 @@ use super::constants::{READ_LOG_FLUSH_POINT, WRITE_LOG_FLUSH_POINT};
 use crate::common::time::{AtomicInstant, Instant};
 use crate::common::HousekeeperConfig;
 
-use super::sync_primitives::{AtomicBool, Mutex, MutexGuard, Ordering};
+use parking_lot::{Mutex, MutexGuard};
+use super::sync_primitives::{AtomicBool, Ordering};
 use std::time::Duration;
 
 pub(crate) trait InnerSync {

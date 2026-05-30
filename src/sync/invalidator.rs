@@ -8,7 +8,8 @@ use crate::{
     PredicateError,
 };
 
-use crate::common::concurrent::sync_primitives::{AtomicBool, Mutex, MutexGuard, Ordering};
+use crate::common::concurrent::sync_primitives::{AtomicBool, Ordering};
+use parking_lot::{Mutex, MutexGuard};
 use std::{
     hash::{BuildHasher, Hash},
     sync::Arc,

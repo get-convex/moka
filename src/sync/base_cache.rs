@@ -32,10 +32,11 @@ use crate::{
 
 use crate::common::concurrent::{
     channel::{Receiver, Sender, TrySendError},
-    sync_primitives::{AtomicBool, AtomicU8, Mutex, Ordering, RwLock},
+    sync_primitives::{AtomicBool, AtomicU8, Ordering},
 };
 use crossbeam_utils::atomic::AtomicCell;
 use equivalent::Equivalent;
+use parking_lot::{Mutex, RwLock};
 use smallvec::SmallVec;
 use std::{
     borrow::Borrow,

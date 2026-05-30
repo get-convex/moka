@@ -141,12 +141,12 @@ impl<T: ?Sized> Clone for MiniArc<T> {
 
 impl<T: ?Sized> Drop for MiniArc<T> {
     fn drop(&mut self) {
+        #[cfg(not(any(moka_loom, moka_shuttle)))]
+        use std::sync::atomic::Ordering::{Acquire, Release};
         #[cfg(moka_loom)]
         use loom::sync::atomic::Ordering::{Acquire, Release};
         #[cfg(moka_shuttle)]
         use shuttle::sync::atomic::Ordering::{Acquire, Release};
-        #[cfg(not(any(moka_loom, moka_shuttle)))]
-        use std::sync::atomic::Ordering::{Acquire, Release};
 
         if self.data().ref_count.fetch_sub(1, Release) == 1 {
             atomic::fence(Acquire);

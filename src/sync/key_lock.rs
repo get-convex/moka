@@ -4,7 +4,8 @@ use std::{
 };
 
 use crate::common::concurrent::arc::MiniArc;
-use crate::common::concurrent::sync_primitives::{Mutex, MutexGuard};
+
+use parking_lot::{Mutex, MutexGuard};
 
 const LOCK_MAP_NUM_SEGMENTS: usize = 64;
 

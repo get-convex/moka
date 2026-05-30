@@ -5,8 +5,7 @@
 // HashMap is keyed by the precomputed hash. This gives O(1) average-case
 // bucket lookup while still accepting the closure-based eq API that cht uses.
 // Within-bucket linear scan is O(1) in practice because hash collisions are
-// rare. The RwLock is provided by sync_primitives and maps to shuttle locks
-// when `cfg(moka_shuttle)` is active.
+// rare. The RwLock is shuttle-aware via shuttle-parking_lot.
 
 use parking_lot::RwLock;
 use std::{
@@ -182,7 +181,11 @@ impl<K, V, S: BuildHasher> ShuttleHashMap<K, V, S> {
         Some(bucket.swap_remove(pos).1)
     }
 
-    pub(crate) fn remove_entry(&self, hash: u64, mut eq: impl FnMut(&K) -> bool) -> Option<(K, V)> {
+    pub(crate) fn remove_entry(
+        &self,
+        hash: u64,
+        mut eq: impl FnMut(&K) -> bool,
+    ) -> Option<(K, V)> {
         let mut buckets = self.buckets.write();
         let bucket = buckets.get_mut(&hash)?;
         let pos = bucket.iter().position(|(k, _)| eq(k))?;

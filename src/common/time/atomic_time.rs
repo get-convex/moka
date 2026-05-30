@@ -1,7 +1,4 @@
-use crate::common::{
-    concurrent::sync_primitives::{AtomicU64, Ordering},
-    time::Instant,
-};
+use crate::common::{concurrent::sync_primitives::{AtomicU64, Ordering}, time::Instant};
 
 /// `AtomicInstant` is a wrapper around `AtomicU64` that provides thread-safe access
 /// to an `Instant`.

@@ -19,7 +19,7 @@ use super::{
     time::Instant,
 };
 
-use crate::common::concurrent::sync_primitives::Mutex;
+use parking_lot::Mutex;
 
 const BUCKET_COUNTS: &[u64] = &[
     64, // roughly seconds
