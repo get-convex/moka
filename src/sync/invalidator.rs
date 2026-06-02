@@ -8,13 +8,11 @@ use crate::{
     PredicateError,
 };
 
+use crate::common::concurrent::sync_primitives::{AtomicBool, Ordering};
 use parking_lot::{Mutex, MutexGuard};
 use std::{
     hash::{BuildHasher, Hash},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
 };
 use uuid::Uuid;
 
@@ -49,7 +47,11 @@ impl<K> KeyDateLite<K> {
 }
 
 pub(crate) struct Invalidator<K, V, S> {
+    #[cfg(not(feature = "shuttle-testing"))]
     predicates: crate::cht::SegmentedHashMap<PredicateId, Predicate<K, V>, S>,
+    #[cfg(feature = "shuttle-testing")]
+    predicates:
+        crate::common::concurrent::shuttle_map::ShuttleHashMap<PredicateId, Predicate<K, V>, S>,
     is_empty: AtomicBool,
     scan_context: Arc<ScanContext<K, V>>,
 }
@@ -63,11 +65,19 @@ impl<K, V, S> Invalidator<K, V, S> {
         S: BuildHasher,
     {
         const CAPACITY: usize = 0;
+        #[cfg(not(feature = "shuttle-testing"))]
         let predicates = crate::cht::SegmentedHashMap::with_num_segments_capacity_and_hasher(
             PREDICATE_MAP_NUM_SEGMENTS,
             CAPACITY,
             hasher,
         );
+        #[cfg(feature = "shuttle-testing")]
+        let predicates =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_capacity_and_hasher(
+                PREDICATE_MAP_NUM_SEGMENTS,
+                CAPACITY,
+                hasher,
+            );
         Self {
             predicates,
             is_empty: AtomicBool::new(true),

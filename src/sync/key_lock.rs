@@ -3,13 +3,17 @@ use std::{
     sync::Arc,
 };
 
-use crate::{cht::SegmentedHashMap, common::concurrent::arc::MiniArc};
+use crate::common::concurrent::arc::MiniArc;
 
 use parking_lot::{Mutex, MutexGuard};
 
 const LOCK_MAP_NUM_SEGMENTS: usize = 64;
 
-type LockMap<K, S> = SegmentedHashMap<Arc<K>, MiniArc<Mutex<()>>, S>;
+#[cfg(not(feature = "shuttle-testing"))]
+type LockMap<K, S> = crate::cht::SegmentedHashMap<Arc<K>, MiniArc<Mutex<()>>, S>;
+#[cfg(feature = "shuttle-testing")]
+type LockMap<K, S> =
+    crate::common::concurrent::shuttle_map::ShuttleHashMap<Arc<K>, MiniArc<Mutex<()>>, S>;
 
 // We need the `where` clause here because of the Drop impl.
 pub(crate) struct KeyLock<'a, K, S>
@@ -69,7 +73,7 @@ where
 {
     pub(crate) fn with_hasher(hasher: S) -> Self {
         Self {
-            locks: SegmentedHashMap::with_num_segments_and_hasher(LOCK_MAP_NUM_SEGMENTS, hasher),
+            locks: LockMap::with_num_segments_and_hasher(LOCK_MAP_NUM_SEGMENTS, hasher),
         }
     }
 

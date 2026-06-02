@@ -5,9 +5,14 @@ use std::{fmt, ptr::NonNull, sync::Arc};
 use tagptr::TagNonNull;
 
 pub(crate) mod arc;
+pub(crate) mod channel;
 pub(crate) mod constants;
 pub(crate) mod deques;
 pub(crate) mod entry_info;
+pub(crate) mod sync_primitives;
+
+#[cfg(feature = "shuttle-testing")]
+pub(crate) mod shuttle_map;
 
 #[cfg(feature = "sync")]
 pub(crate) mod housekeeper;

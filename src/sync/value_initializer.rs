@@ -51,7 +51,10 @@ pub(crate) struct ValueInitializer<K, V, S> {
     // try_get_with method. We use the type ID as a part of the key to ensure that
     // we can always downcast the trait object ErrorObject (in Waiter<V>) into
     // its concrete type.
+    #[cfg(not(feature = "shuttle-testing"))]
     waiters: crate::cht::SegmentedHashMap<(Arc<K>, TypeId), Waiter<V>, S>,
+    #[cfg(feature = "shuttle-testing")]
+    waiters: crate::common::concurrent::shuttle_map::ShuttleHashMap<(Arc<K>, TypeId), Waiter<V>, S>,
 }
 
 impl<K, V, S> ValueInitializer<K, V, S>
@@ -61,12 +64,18 @@ where
     S: BuildHasher + Clone + Send + Sync + 'static,
 {
     pub(crate) fn with_hasher(hasher: S) -> Self {
-        Self {
-            waiters: crate::cht::SegmentedHashMap::with_num_segments_and_hasher(
+        #[cfg(not(feature = "shuttle-testing"))]
+        let waiters = crate::cht::SegmentedHashMap::with_num_segments_and_hasher(
+            WAITER_MAP_NUM_SEGMENTS,
+            hasher,
+        );
+        #[cfg(feature = "shuttle-testing")]
+        let waiters =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_and_hasher(
                 WAITER_MAP_NUM_SEGMENTS,
                 hasher,
-            ),
-        }
+            );
+        Self { waiters }
     }
 
     /// # Panics
@@ -277,6 +286,7 @@ where
             Op::Put(value) => {
                 cache.insert_with_hash(Arc::clone(&c_key), c_hash, value.clone());
                 if entry_existed {
+                    #[cfg(not(feature = "shuttle-testing"))]
                     crossbeam_epoch::pin().flush();
                     let entry = Entry::new(Some(c_key), value, true, true);
                     Ok(CompResult::ReplacedWith(entry))
@@ -288,6 +298,7 @@ where
             Op::Remove => {
                 let maybe_prev_v = cache.invalidate_with_hash(&*c_key, c_hash, true);
                 if let Some(prev_v) = maybe_prev_v {
+                    #[cfg(not(feature = "shuttle-testing"))]
                     crossbeam_epoch::pin().flush();
                     let entry = Entry::new(Some(c_key), prev_v, false, false);
                     Ok(CompResult::Removed(entry))

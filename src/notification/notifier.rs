@@ -1,7 +1,5 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
+use crate::common::concurrent::sync_primitives::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use crate::notification::{EvictionListener, RemovalCause};
 

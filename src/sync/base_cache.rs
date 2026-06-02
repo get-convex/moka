@@ -30,7 +30,10 @@ use crate::{
     Entry, Expiry, Policy, PredicateError,
 };
 
-use crossbeam_channel::{Receiver, Sender, TrySendError};
+use crate::common::concurrent::{
+    channel::{Receiver, Sender, TrySendError},
+    sync_primitives::{AtomicBool, AtomicU8, Ordering},
+};
 use crossbeam_utils::atomic::AtomicCell;
 use equivalent::Equivalent;
 use parking_lot::{Mutex, RwLock};
@@ -40,10 +43,7 @@ use std::{
     collections::hash_map::RandomState,
     hash::{BuildHasher, Hash},
     rc::Rc,
-    sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering},
-        Arc,
-    },
+    sync::Arc,
     time::{Duration, Instant as StdInstant},
 };
 
@@ -157,8 +157,8 @@ where
         let is_eviction_listener_enabled = eviction_listener.is_some();
         let fast_now = clock.fast_now();
 
-        let (r_snd, r_rcv) = crossbeam_channel::bounded(r_size);
-        let (w_snd, w_rcv) = crossbeam_channel::bounded(w_size);
+        let (r_snd, r_rcv) = crate::common::concurrent::channel::bounded(r_size);
+        let (w_snd, w_rcv) = crate::common::concurrent::channel::bounded(w_size);
 
         let inner = Arc::new(Inner::new(
             name,
@@ -605,6 +605,7 @@ where
                 old_info.last_modified,
             );
         }
+        #[cfg(not(feature = "shuttle-testing"))]
         crossbeam_epoch::pin().flush();
         (upd_op, ts)
     }
@@ -867,7 +868,12 @@ enum AdmissionResult<K> {
     Rejected,
 }
 
+#[cfg(not(feature = "shuttle-testing"))]
 type CacheStore<K, V, S> = crate::cht::SegmentedHashMap<Arc<K>, MiniArc<ValueEntry<K, V>>, S>;
+
+#[cfg(feature = "shuttle-testing")]
+type CacheStore<K, V, S> =
+    crate::common::concurrent::shuttle_map::ShuttleHashMap<Arc<K>, MiniArc<ValueEntry<K, V>>, S>;
 
 pub(crate) struct Inner<K, V, S> {
     name: Option<String>,
@@ -896,6 +902,7 @@ impl<K, V, S> Drop for Inner<K, V, S> {
     fn drop(&mut self) {
         // Ensure crossbeam-epoch to collect garbages (`deferred_fn`s) in the
         // global bag so that previously cached values will be dropped.
+        #[cfg(not(feature = "shuttle-testing"))]
         for _ in 0..128 {
             crossbeam_epoch::pin().flush();
         }
@@ -1027,11 +1034,19 @@ where
                 .unwrap_or_default();
             (64, ic)
         };
+        #[cfg(not(feature = "shuttle-testing"))]
         let cache = crate::cht::SegmentedHashMap::with_num_segments_capacity_and_hasher(
             num_segments,
             initial_capacity,
             build_hasher.clone(),
         );
+        #[cfg(feature = "shuttle-testing")]
+        let cache =
+            crate::common::concurrent::shuttle_map::ShuttleHashMap::with_num_segments_capacity_and_hasher(
+                num_segments,
+                initial_capacity,
+                build_hasher.clone(),
+            );
 
         let now = clock.now();
         let timer_wheel = Mutex::new(TimerWheel::new(now));
@@ -1309,6 +1324,7 @@ where
         self.weighted_size
             .store(eviction_state.counters.weighted_size);
 
+        #[cfg(not(feature = "shuttle-testing"))]
         crossbeam_epoch::pin().flush();
 
         // Ensure the deqs lock is held until here.

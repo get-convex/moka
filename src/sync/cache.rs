@@ -19,7 +19,7 @@ use crate::{
     Entry, Policy, PredicateError,
 };
 
-use crossbeam_channel::{Sender, TrySendError};
+use crate::common::concurrent::channel::{Sender, TrySendError};
 use equivalent::Equivalent;
 use std::{
     collections::hash_map::RandomState,
@@ -1046,6 +1046,7 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 Entry::new(k, v, true, false)
             }
@@ -1267,11 +1268,13 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 Some(Entry::new(k, v, true, false))
             }
             InitResult::ReadExisting(v) => Some(Entry::new(k, v, false, false)),
             InitResult::InitErr(_) => {
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 None
             }
@@ -1459,11 +1462,13 @@ where
             .try_init_or_read(&key, type_id, get, init, insert, post_init)
         {
             InitResult::Initialized(v) => {
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 Ok(Entry::new(k, v, true, false))
             }
             InitResult::ReadExisting(v) => Ok(Entry::new(k, v, false, false)),
             InitResult::InitErr(e) => {
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 Err(e)
             }
@@ -1635,6 +1640,7 @@ where
                     hk,
                 )
                 .expect("Failed to remove");
+                #[cfg(not(feature = "shuttle-testing"))]
                 crossbeam_epoch::pin().flush();
                 maybe_v
             }
@@ -1887,13 +1893,11 @@ mod tests {
         Expiry,
     };
 
+    use crate::common::concurrent::sync_primitives::{AtomicU8, Ordering};
     use parking_lot::Mutex;
     use std::{
         convert::Infallible,
-        sync::{
-            atomic::{AtomicU8, Ordering},
-            Arc,
-        },
+        sync::Arc,
         time::{Duration, Instant as StdInstant},
     };
 
