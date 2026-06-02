@@ -1,4 +1,4 @@
-#![cfg(moka_shuttle)]
+#![cfg(feature = "shuttle-testing")]
 // These tests mostly just check that nothing deadlocks or panics during concurrent operations.
 
 use moka::sync::Cache;

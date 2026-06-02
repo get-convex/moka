@@ -1,5 +1,5 @@
 // Shuttle-aware hash map that replaces `cht::SegmentedHashMap` when
-// `cfg(moka_shuttle)` is active.
+// `cfg(feature = "shuttle-testing")` is active.
 //
 // Backed by `parking_lot::RwLock<HashMap<u64, Vec<(K, V)>>>` where the outer
 // HashMap is keyed by the precomputed hash. This gives O(1) average-case

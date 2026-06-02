@@ -9,9 +9,9 @@ use parking_lot::{Mutex, MutexGuard};
 
 const LOCK_MAP_NUM_SEGMENTS: usize = 64;
 
-#[cfg(not(moka_shuttle))]
+#[cfg(not(feature = "shuttle-testing"))]
 type LockMap<K, S> = crate::cht::SegmentedHashMap<Arc<K>, MiniArc<Mutex<()>>, S>;
-#[cfg(moka_shuttle)]
+#[cfg(feature = "shuttle-testing")]
 type LockMap<K, S> =
     crate::common::concurrent::shuttle_map::ShuttleHashMap<Arc<K>, MiniArc<Mutex<()>>, S>;
 

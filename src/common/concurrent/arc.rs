@@ -18,13 +18,13 @@ use std::{
     ptr::NonNull,
 };
 
-#[cfg(not(any(moka_loom, moka_shuttle)))]
+#[cfg(not(any(moka_loom, feature = "shuttle-testing")))]
 use std::sync::atomic::{self, AtomicU32};
 
 #[cfg(moka_loom)]
 use loom::sync::atomic::{self, AtomicU32};
 
-#[cfg(moka_shuttle)]
+#[cfg(feature = "shuttle-testing")]
 use shuttle::sync::atomic::{self, AtomicU32};
 
 /// A thread-safe reference-counting pointer. `MiniArc` is similar to
@@ -141,11 +141,11 @@ impl<T: ?Sized> Clone for MiniArc<T> {
 
 impl<T: ?Sized> Drop for MiniArc<T> {
     fn drop(&mut self) {
-        #[cfg(not(any(moka_loom, moka_shuttle)))]
+        #[cfg(not(any(moka_loom, feature = "shuttle-testing")))]
         use std::sync::atomic::Ordering::{Acquire, Release};
         #[cfg(moka_loom)]
         use loom::sync::atomic::Ordering::{Acquire, Release};
-        #[cfg(moka_shuttle)]
+        #[cfg(feature = "shuttle-testing")]
         use shuttle::sync::atomic::Ordering::{Acquire, Release};
 
         if self.data().ref_count.fetch_sub(1, Release) == 1 {

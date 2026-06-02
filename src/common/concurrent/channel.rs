@@ -1,17 +1,17 @@
 // Channel shim that re-exports crossbeam-channel types for normal builds and
-// provides a shuttle-aware bounded channel for `cfg(moka_shuttle)` builds.
+// provides a shuttle-aware bounded channel for `cfg(feature = "shuttle-testing")` builds.
 //
 // The shuttle implementation uses `shuttle::sync::Mutex` so that channel
 // send/receive operations are visible to shuttle's scheduler.
 
 // ── non-shuttle (normal build) ───────────────────────────────────────────────
 
-#[cfg(not(moka_shuttle))]
+#[cfg(not(feature = "shuttle-testing"))]
 pub(crate) use crossbeam_channel::{bounded, Receiver, Sender, TrySendError};
 
 // ── shuttle build ─────────────────────────────────────────────────────────────
 
-#[cfg(moka_shuttle)]
+#[cfg(feature = "shuttle-testing")]
 mod shuttle_impl {
     use shuttle::sync::Mutex;
     use std::{collections::VecDeque, sync::Arc};
@@ -144,5 +144,5 @@ mod shuttle_impl {
     unsafe impl<T: Send> Send for Receiver<T> {}
 }
 
-#[cfg(moka_shuttle)]
+#[cfg(feature = "shuttle-testing")]
 pub(crate) use shuttle_impl::{bounded, Receiver, Sender, TrySendError};

@@ -38,7 +38,7 @@ default = []
 sync = []
 
 # Enable this feature to compile moka with shuttle-aware primitives so you can
-# use moka inside shuttle-controlled tests. Sets `cfg(moka_shuttle)` via build.rs.
+# use moka inside shuttle-controlled tests.
 shuttle-testing = ["dep:shuttle", "parking_lot/shuttle"]
 
 # Enable this feature to use `moka::future::Cache`.
@@ -123,7 +123,6 @@ unexpected_cfgs = { level = "warn", check-cfg = [
     "cfg(beta_clippy)",
     "cfg(kani)",
     "cfg(moka_loom)",
-    "cfg(moka_shuttle)",
     "cfg(mips)",
     "cfg(run_flaky_tests)",
     "cfg(skip_large_mem_tests)",
